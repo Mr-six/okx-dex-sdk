@@ -1,5 +1,6 @@
 import CryptoJS from 'crypto-js';
 import { OKXConfig } from '../types';
+import axios, { AxiosResponse } from 'axios';
 
 class APIError extends Error {
     constructor(
@@ -8,10 +9,10 @@ class APIError extends Error {
         public statusText?: string,
         public responseBody?: any,
         public requestDetails?: {
-            method: string,
-            path: string,
-            params?: Record<string, string | undefined>,
-            queryString?: string
+            method: string;
+            path: string;
+            params?: Record<string, string | undefined>;
+            queryString?: string;
         }
     ) {
         super(message);
@@ -31,32 +32,32 @@ export class HTTPClient {
         };
     }
 
-    private getHeaders(timestamp: string, method: string, path: string, queryString = "") {
+    private getHeaders(timestamp: string, method: string, path: string, queryString = '') {
         const stringToSign = timestamp + method + path + queryString;
-        
+
         // Ensure the string is properly encoded
         const encodedString = CryptoJS.enc.Utf8.parse(stringToSign);
         const secretKey = CryptoJS.enc.Utf8.parse(this.config.secretKey);
-        
+
         // Create HMAC-SHA256 signature
         const signature = CryptoJS.HmacSHA256(encodedString, secretKey);
-        
+
         return {
-            "Content-Type": "application/json",
-            "OK-ACCESS-KEY": this.config.apiKey,
-            "OK-ACCESS-SIGN": CryptoJS.enc.Base64.stringify(signature),
-            "OK-ACCESS-TIMESTAMP": timestamp,
-            "OK-ACCESS-PASSPHRASE": this.config.apiPassphrase,
-            "OK-ACCESS-PROJECT": this.config.projectId,
+            'Content-Type': 'application/json',
+            'OK-ACCESS-KEY': this.config.apiKey,
+            'OK-ACCESS-SIGN': CryptoJS.enc.Base64.stringify(signature),
+            'OK-ACCESS-TIMESTAMP': timestamp,
+            'OK-ACCESS-PASSPHRASE': this.config.apiPassphrase,
+            'OK-ACCESS-PROJECT': this.config.projectId
         };
     }
 
-    private async handleErrorResponse(response: Response, requestDetails: any) {
+    private async handleErrorResponse(response: AxiosResponse, requestDetails: any) {
         let responseBody;
         try {
-            responseBody = await response.json();
+            responseBody = response.data;
         } catch (e) {
-            responseBody = await response.text();
+            responseBody = 'Unable to parse response body';
         }
 
         throw new APIError(
@@ -72,11 +73,11 @@ export class HTTPClient {
         const timestamp = new Date().toISOString();
 
         // Filter out undefined values from params
-        const cleanParams = params ? Object.fromEntries(
-            Object.entries(params).filter(([_, v]) => v !== undefined)
-        ) as Record<string, string> : undefined;
+        const cleanParams = params
+            ? (Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined)) as Record<string, string>)
+            : undefined;
 
-        const queryString = cleanParams ? "?" + new URLSearchParams(cleanParams).toString() : "";
+        const queryString = cleanParams ? '?' + new URLSearchParams(cleanParams).toString() : '';
         const headers = this.getHeaders(timestamp, method, path, queryString);
         const requestDetails = {
             method,
@@ -104,23 +105,27 @@ export class HTTPClient {
         let retries = 0;
         while (retries < this.config.maxRetries!) {
             try {
-                const response = await fetch(`${this.config.baseUrl}${path}${queryString}`, {
+                const config = {
                     method,
-                    headers
-                });
+                    url: `${this.config.baseUrl}${path}${queryString}`,
+                    headers,
+                    timeout: this.config.timeout,
+                    httpsAgent: this.config.httpsAgent
+                };
+                const response = await axios(config);
 
-                if (!response.ok) {
+                if (!response.status.toString().startsWith('2')) {
                     await this.handleErrorResponse(response, requestDetails);
                 }
 
-                const data = await response.json();
+                const data = await response.data;
 
                 // Log response in development
                 if (process.env.NODE_ENV === 'development') {
                     console.log('Response:', JSON.stringify(data, null, 2));
                 }
 
-                if (data.code !== "0") {
+                if (data.code !== '0') {
                     throw new APIError(
                         `API Error: ${data.msg}`,
                         response.status,
@@ -149,6 +154,6 @@ export class HTTPClient {
                 await new Promise(resolve => setTimeout(resolve, 1000 * retries));
             }
         }
-        throw new Error("Max retries exceeded");
+        throw new Error('Max retries exceeded');
     }
 }
