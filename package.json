@@ -1,5 +1,5 @@
 {
-  "name": "@okx-dex/okx-dex-sdk",
+  "name": "@mrsix/okx-dex-sdk",
   "version": "1.0.14",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
