@@ -1,51 +1,56 @@
 // src/api/swap/evm/evm-approve.ts
-import { ethers } from "ethers";
-import { SwapExecutor } from "../types";
-import { SwapParams, SwapResponseData, SwapResult, ChainConfig, OKXConfig, APIResponse, ChainData } from "../../../types";
-import { HTTPClient } from "../../../core/http-client";
+import { ethers } from 'ethers';
+import { SwapExecutor } from '../types';
+import {
+    SwapParams,
+    SwapResponseData,
+    SwapResult,
+    ChainConfig,
+    OKXConfig,
+    APIResponse,
+    ChainData
+} from '../../../types';
+import { HTTPClient } from '../../../core/http-client';
 
 // ERC20 ABI for approval
 const ERC20_ABI = [
     {
-        "constant": true,
-        "inputs": [
-            { "name": "_owner", "type": "address" },
-            { "name": "_spender", "type": "address" }
+        constant: true,
+        inputs: [
+            { name: '_owner', type: 'address' },
+            { name: '_spender', type: 'address' }
         ],
-        "name": "allowance",
-        "outputs": [{ "name": "", "type": "uint256" }],
-        "type": "function"
+        name: 'allowance',
+        outputs: [{ name: '', type: 'uint256' }],
+        type: 'function'
     },
     {
-        "constant": false,
-        "inputs": [
-            { "name": "_spender", "type": "address" },
-            { "name": "_value", "type": "uint256" }
+        constant: false,
+        inputs: [
+            { name: '_spender', type: 'address' },
+            { name: '_value', type: 'uint256' }
         ],
-        "name": "approve",
-        "outputs": [{ "name": "", "type": "bool" }],
-        "type": "function"
+        name: 'approve',
+        outputs: [{ name: '', type: 'bool' }],
+        type: 'function'
     }
 ];
 
 export class EVMApproveExecutor implements SwapExecutor {
     private readonly provider: ethers.Provider;
-    private readonly DEFAULT_GAS_MULTIPLIER = BigInt(150); // 1.5x
+    private readonly DEFAULT_GAS_MULTIPLIER = 110; // 1.1x
     private readonly httpClient: HTTPClient;
 
-    constructor(
-        private readonly config: OKXConfig,
-        private readonly networkConfig: ChainConfig
-    ) {
+    constructor(private readonly config: OKXConfig, private readonly networkConfig: ChainConfig) {
         if (!this.config.evm?.wallet) {
-            throw new Error("EVM configuration required");
+            throw new Error('EVM configuration required');
         }
         this.provider = this.config.evm.wallet.provider;
         this.httpClient = new HTTPClient(this.config);
     }
 
     async executeSwap(swapData: SwapResponseData, params: SwapParams): Promise<SwapResult> {
-        throw new Error("Swap execution not supported in approval executor");
+        throw new Error('Swap execution not supported in approval executor');
     }
 
     private async getAllowance(tokenAddress: string, ownerAddress: string, spenderAddress: string): Promise<bigint> {
@@ -57,10 +62,11 @@ export class EVMApproveExecutor implements SwapExecutor {
     async handleTokenApproval(
         chainId: string,
         tokenAddress: string,
-        amount: string
+        amount: string,
+        gasMultiplier: number = 110
     ): Promise<{ transactionHash: string }> {
         if (!this.config.evm?.wallet) {
-            throw new Error("EVM wallet required");
+            throw new Error('EVM wallet required');
         }
 
         const dexContractAddress = await this.getDexContractAddress(chainId);
@@ -73,20 +79,21 @@ export class EVMApproveExecutor implements SwapExecutor {
         );
 
         if (currentAllowance >= BigInt(amount)) {
-            throw new Error("Token already approved for the requested amount");
+            throw new Error('Token already approved for the requested amount');
         }
 
         try {
             // Execute the approval transaction
             const result = await this.executeApprovalTransaction(
-                tokenAddress, 
-                dexContractAddress, 
-                amount
+                tokenAddress,
+                dexContractAddress,
+                amount,
+                gasMultiplier
             );
-            
+
             return { transactionHash: result.hash };
         } catch (error) {
-            console.error("Approval execution failed:", error);
+            console.error('Approval execution failed:', error);
             throw error;
         }
     }
@@ -112,26 +119,29 @@ export class EVMApproveExecutor implements SwapExecutor {
 
     private async executeApprovalTransaction(
         tokenAddress: string,
-        spenderAddress: string, 
-        amount: string
+        spenderAddress: string,
+        amount: string,
+        gasMultiplier?: number
     ) {
         if (!this.config.evm?.wallet) {
-            throw new Error("EVM wallet required");
+            throw new Error('EVM wallet required');
         }
-
+        gasMultiplier = gasMultiplier ? gasMultiplier : this.DEFAULT_GAS_MULTIPLIER;
         const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, this.config.evm.wallet);
 
         let retryCount = 0;
         while (retryCount < (this.networkConfig.maxRetries || 3)) {
             try {
-                console.log("Sending approval transaction...");
+                const feeData = await this.provider.getFeeData();
+                const { maxFeePerGas, maxPriorityFeePerGas, gasPrice } = feeData;
+                console.log('Sending approval transaction...');
                 const tx = await tokenContract.approve(spenderAddress, amount, {
                     gasLimit: BigInt(100000), // Safe default for approvals
-                    maxFeePerGas: (await this.provider.getFeeData()).maxFeePerGas! * this.DEFAULT_GAS_MULTIPLIER / BigInt(100),
-                    maxPriorityFeePerGas: (await this.provider.getFeeData()).maxPriorityFeePerGas! * this.DEFAULT_GAS_MULTIPLIER / BigInt(100)
+                    maxFeePerGas: ((maxFeePerGas || gasPrice)! * BigInt(gasMultiplier)) / BigInt(100),
+                    maxPriorityFeePerGas: ((maxPriorityFeePerGas || gasPrice)! * BigInt(gasMultiplier)) / BigInt(100)
                 });
 
-                console.log("Waiting for transaction confirmation...");
+                console.log('Waiting for transaction confirmation...');
                 return await tx.wait();
             } catch (error) {
                 retryCount++;
