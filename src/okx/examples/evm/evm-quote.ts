@@ -12,11 +12,11 @@ const client = new OKXDexClient({
 async function main() {
     try {
         const quote = await client.dex.getQuote({
-            chainId: '1',
+            chainIndex: '1',
             fromTokenAddress: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
             toTokenAddress: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
             amount: '10000000000000000000',
-            slippage: '0.1'
+            slippagePercent: '0.1'
         });
         console.log('Quote:', JSON.stringify(quote, null, 2));
     } catch (error) {

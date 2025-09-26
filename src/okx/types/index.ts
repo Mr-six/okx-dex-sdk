@@ -33,15 +33,17 @@ export interface TokenListResponse {
 
 // Update RouterResult to match the full structure
 export interface RouterResult {
-    chainId: string;
+    chainIndex: string;
+    contextSlot?: number;
     dexRouterList: DexRouter[];
     estimateGasFee: string;
     fromToken: TokenInfo;
     toToken: TokenInfo;
     fromTokenAmount: string;
     toTokenAmount: string;
-    priceImpactPercentage: string;
-    quoteCompareList: ComparisonQuote[];
+    priceImpactPercent: string;
+    router: string;
+    swapMode: string;
     tradeFee: string;
 }
 
@@ -58,9 +60,11 @@ export interface SubRouterInfo {
 }
 
 export interface DexRouter {
-    router: string;
-    routerPercent: string;
-    subRouterList: SubRouterInfo[];
+    dexProtocol: DexProtocol;
+    fromToken: TokenInfo;
+    fromTokenIndex: string;
+    toToken: TokenInfo;
+    toTokenIndex: string;
 }
 
 export interface ComparisonQuote {
@@ -72,15 +76,17 @@ export interface ComparisonQuote {
 
 // Direct quote response structure
 export interface QuoteData {
-    chainId: string;
+    chainIndex: string;
+    contextSlot?: number;
     dexRouterList: DexRouter[];
     estimateGasFee: string;
     fromToken: TokenInfo;
     toToken: TokenInfo;
     fromTokenAmount: string;
     toTokenAmount: string;
-    priceImpactPercentage: string;
-    quoteCompareList: ComparisonQuote[];
+    priceImpactPercent: string;
+    router: string;
+    swapMode: string;
     tradeFee: string;
     routerResult?: RouterResult;
     tx?: TransactionData;
@@ -103,7 +109,7 @@ export interface TokenData {
 }
 
 export interface ChainData {
-    chainId: string;
+    chainIndex: string;
     chainName: string;
     dexTokenApproveAddress: string | null;
 }
@@ -111,19 +117,8 @@ export interface ChainData {
 // New interface specifically for swap responses
 export interface SwapResponseData {
     data: {
-        routerResult: {
-            chainId: string;
-            dexRouterList: DexRouter[];
-            estimateGasFee: string;
-            fromToken: TokenInfo;
-            toToken: TokenInfo;
-            fromTokenAmount: string;
-            toTokenAmount: string;
-            priceImpactPercentage: string;
-            quoteCompareList: ComparisonQuote[];
-            tradeFee: string;
-        };
-        tx?: TransactionData;
+        routerResult: RouterResult;
+        tx: TransactionData;
     }[];
     code: string;
     msg: string;
@@ -136,18 +131,7 @@ export interface ApproveTransactionData {
 
 // Update getSwapData and executeSolanaSwap to use this
 export interface SwapExecutionData {
-    routerResult: {
-        chainId: string;
-        dexRouterList: DexRouter[];
-        estimateGasFee: string;
-        fromToken: TokenInfo;
-        toToken: TokenInfo;
-        fromTokenAmount: string;
-        toTokenAmount: string;
-        priceImpactPercentage: string;
-        quoteCompareList: ComparisonQuote[];
-        tradeFee: string;
-    };
+    routerResult: RouterResult;
     tx?: TransactionData;
 }
 
@@ -158,9 +142,10 @@ export interface TransactionData {
     gas: string;
     gasPrice: string;
     maxPriorityFeePerGas: string;
+    maxSpendAmount: string;
     minReceiveAmount: string;
     signatureData: string[];
-    slippage: string;
+    slippagePercent: string;
     to: string;
     value: string;
 }
@@ -169,6 +154,13 @@ export interface APIResponse<T> {
     code: string;
     msg: string;
     data: T[];
+}
+
+// For APIs that return a single object instead of an array
+export interface APIResponseSingle<T> {
+    code: string;
+    msg: string;
+    data: T;
 }
 
 // Configuration interfaces
@@ -205,7 +197,7 @@ export interface ChainConfig {
 }
 
 export interface NetworkConfigs {
-    [chainId: string]: ChainConfig;
+    [chainIndex: string]: ChainConfig;
 }
 
 // Update OKXConfig to include network configs
@@ -230,14 +222,13 @@ export interface APIRequestParams {
 
 // Slippage options
 export interface SlippageOptions {
-    slippage?: string;
+    slippagePercent?: string;
     autoSlippage?: boolean;
-    maxAutoSlippage?: string;
+    maxAutoSlippagePercent?: string;
 }
 
 // Request params
 export interface BaseParams {
-    chainId: string;
     chainIndex?: string;
     fromTokenAddress: string;
     toTokenAddress: string;
@@ -245,14 +236,14 @@ export interface BaseParams {
     userWalletAddress?: string;
     dexIds?: string;
     directRoute?: boolean;
-    priceImpactProtectionPercentage?: string;
+    priceImpactProtectionPercent?: string;
     feePercent?: string;
 }
 
 export interface SwapParams extends BaseParams {
-    slippage?: string;
+    slippagePercent?: string;
     autoSlippage?: boolean;
-    maxAutoSlippage?: string;
+    maxAutoSlippagePercent?: string;
     swapReceiverAddress?: string;
     fromTokenReferrerWalletAddress?: string;
     toTokenReferrerWalletAddress?: string;
@@ -277,7 +268,7 @@ export interface SwapSimulationParams {
 }
 
 export interface QuoteParams extends BaseParams {
-    slippage: string;
+    slippagePercent: string;
 }
 
 // Update SwapResult interface to include more details
@@ -330,7 +321,7 @@ export interface FormattedSwapResponse {
 }
 
 export interface ApproveTokenParams {
-    chainId: string;
+    chainIndex: string;
     tokenContractAddress: string;
     approveAmount: string;
 }
@@ -427,15 +418,11 @@ export interface SolanaInstructionItem {
 export interface SolanaSwapInstructionData {
     addressLookupTableAccount: string[];
     instructionLists: SolanaInstructionItem[];
-    routerResult: RouterResult & {
-        chainIndex?: string;
-        contextSlot?: number;
-    };
+    routerResult: RouterResult;
     tx: {
         from: string;
         minReceiveAmount: string;
-        slippage: string;
+        slippagePercent: string;
         to: string;
-        [key: string]: any;
     };
 }

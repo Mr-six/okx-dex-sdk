@@ -53,11 +53,11 @@ async function main() {
         // Get quote to fetch token information
         console.log("Getting token information...");
         const quote = await client.dex.getQuote({
-            chainId: '501',
+            chainIndex: '501',
             fromTokenAddress,
             toTokenAddress,
             amount: '100000000',
-            slippage: '0.005',
+            slippagePercent: '0.005',
         });
 
         const tokenInfo = {
@@ -87,11 +87,11 @@ async function main() {
         // Execute the swap
         console.log("\nExecuting swap...");
         const result = await client.dex.executeSwap({
-            chainId: '501',
+            chainIndex: '501',
             fromTokenAddress,
             toTokenAddress,
             amount: rawAmount,
-            slippage: '0.005',
+            slippagePercent: '0.005',
             userWalletAddress: wallet.publicKey.toString(),
         });
 

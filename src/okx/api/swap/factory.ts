@@ -6,8 +6,8 @@ import { EVMSwapExecutor } from "./evm/evm-swap";
 import { EVMApproveExecutor } from "./evm/evm-approve";
 
 export class SwapExecutorFactory {
-    static createExecutor(chainId: string, config: OKXConfig, networkConfig: ChainConfig): SwapExecutor {
-        switch (chainId) {
+    static createExecutor(chainIndex: string, config: OKXConfig, networkConfig: ChainConfig): SwapExecutor {
+        switch (chainIndex) {
             case "501": // Solana
                 return new SolanaSwapExecutor(config, networkConfig);
             case "784": // Sui
@@ -37,12 +37,12 @@ export class SwapExecutorFactory {
             case "66": // OKT Chain
                 return new EVMSwapExecutor(config, networkConfig);
             default:
-                throw new Error(`Chain ${chainId} not supported for swap execution`);
+                throw new Error(`Chain ${chainIndex} not supported for swap execution`);
         }
     }
 
-    static createApproveExecutor(chainId: string, config: OKXConfig, networkConfig: ChainConfig): EVMApproveExecutor {
-        switch (chainId) {
+    static createApproveExecutor(chainIndex: string, config: OKXConfig, networkConfig: ChainConfig): EVMApproveExecutor {
+        switch (chainIndex) {
             case "196": // X Layer
             case "1": // Ethereum
             case "137": // Polygon
@@ -68,7 +68,7 @@ export class SwapExecutorFactory {
             case "66": // OKT Chain
                 return new EVMApproveExecutor(config, networkConfig);
             default:
-                throw new Error(`Chain ${chainId} not supported for approve execution`);
+                throw new Error(`Chain ${chainIndex} not supported for approve execution`);
         }
     }
 }

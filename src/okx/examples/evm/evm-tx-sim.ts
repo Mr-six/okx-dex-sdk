@@ -23,11 +23,11 @@ async function main() {
     try {
         // First get the swap data
     const swapData = await client.dex.getSwapData({
-      chainId: '8453',
+      chainIndex: '8453',
       fromTokenAddress: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', // ETH address
       toTokenAddress: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', // USDC address
       amount: String(10 ** 18 * 0.001),
-      slippage: '0.005',
+      slippagePercent: '0.005',
       userWalletAddress: walletAddress,
       fromTokenReferrerWalletAddress: walletAddress,
       feePercent: '0.001'

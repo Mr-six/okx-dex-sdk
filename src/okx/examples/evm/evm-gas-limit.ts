@@ -24,11 +24,11 @@ async function main() {
         // Example 2: Get swap data and use it for gas estimation
         console.log('\n=== EVM Swap Transaction Gas Limit ===');
         const swapData = await client.dex.getSwapData({
-            chainId: '8453', // Ethereum mainnet
+            chainIndex: '8453', // Ethereum mainnet
             fromTokenAddress: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', // ETH
             toTokenAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC
             amount: '100000000000', // 1 ETH in wei
-            slippage: '0.05',
+            slippagePercent: '0.05',
             userWalletAddress: walletAddress,
             fromTokenReferrerWalletAddress: walletAddress,
             feePercent: '0.0001'

@@ -76,11 +76,11 @@ async function main() {
         // Get token information using quote
         console.log("Getting token information...");
         const tokenInfo = await client.dex.getQuote({
-            chainId: chainId,
+            chainIndex: chainId,
             fromTokenAddress: tokenAddress,
             toTokenAddress: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', // Native token
             amount: '1000000', // Use a reasonable amount for quote
-            slippage: '0.5'
+            slippagePercent: '0.5'
         });
 
         const tokenDecimals = parseInt(tokenInfo.data[0].fromToken.decimal);
@@ -95,7 +95,7 @@ async function main() {
         // Execute the approval
         console.log("\nExecuting approval...");
         const result = await client.dex.executeApproval({
-            chainId: chainId,
+            chainIndex: chainId,
             tokenContractAddress: tokenAddress,
             approveAmount: rawAmount
         });

@@ -37,11 +37,11 @@ async function main() {
         // Step 1: Get swap data
         console.log('\n1. Getting swap data...');
         const swapData = await client.dex.getSwapData({
-            chainId: '8453', // Base mainnet
+            chainIndex: '8453', // Base mainnet
             fromTokenAddress: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', // ETH
             toTokenAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', // USDC on Base
             amount: '3000000000000000', // 0.001 ETH in wei
-            slippage: '0.05',
+            slippagePercent: '0.05',
             userWalletAddress: walletAddress,
             fromTokenReferrerWalletAddress: walletAddress,
             feePercent: '0.0001'
@@ -55,7 +55,7 @@ async function main() {
         console.log('✅ Swap data received');
         console.log('- From Token Amount:', swapData.data[0].routerResult.fromTokenAmount);
         console.log('- To Token Amount:', swapData.data[0].routerResult.toTokenAmount);
-        console.log('- Price Impact:', swapData.data[0].routerResult.priceImpactPercentage);
+        console.log('- Price Impact:', swapData.data[0].routerResult.priceImpactPercent);
         console.log('- Gas Estimate:', txData.gas);
 
         // Step 2: Sign the transaction

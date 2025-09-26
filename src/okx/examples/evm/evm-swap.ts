@@ -61,11 +61,11 @@ async function main() {
 
         // Get quote
         const quote = await client.dex.getQuote({
-            chainId: '8453',
+            chainIndex: '8453',
             fromTokenAddress,
             toTokenAddress,
             amount: quoteAmount,
-            slippage: '0.05'
+            slippagePercent: '0.05'
         });
 
 
@@ -96,11 +96,11 @@ async function main() {
         // Execute the swap
         console.log("\nExecuting swap...");
         const result = await client.dex.executeSwap({
-            chainId: '8453',
+            chainIndex: '8453',
             fromTokenAddress: fromTokenAddress, // WETH
             toTokenAddress: toTokenAddress, // USDC
             amount: rawAmount, // 0.0001 WETH
-            slippage: '0.05',
+            slippagePercent: '0.05',
             userWalletAddress: wallet.address,
             fromTokenReferrerWalletAddress: wallet.address,
             feePercent: '0.0001'

@@ -55,7 +55,7 @@ export class EVMApproveExecutor implements SwapExecutor {
     }
 
     async handleTokenApproval(
-        chainId: string,
+        chainIndex: string,
         tokenAddress: string,
         amount: string
     ): Promise<{ transactionHash: string }> {
@@ -63,7 +63,7 @@ export class EVMApproveExecutor implements SwapExecutor {
             throw new Error("EVM wallet required");
         }
 
-        const dexContractAddress = await this.getDexContractAddress(chainId, tokenAddress, amount);
+        const dexContractAddress = await this.getDexContractAddress(chainIndex, tokenAddress, amount);
 
         // Check current allowance
         const currentAllowance = await this.getAllowance(
@@ -91,20 +91,20 @@ export class EVMApproveExecutor implements SwapExecutor {
         }
     }
 
-    private async getDexContractAddress(chainId: string, tokenAddress: string, amount: string): Promise<string> {
+    private async getDexContractAddress(chainIndex: string, tokenAddress: string, amount: string): Promise<string> {
         try {
             const response = await this.httpClient.request<APIResponse<ApproveTransactionData>>(
                 'GET',
-                '/api/v5/dex/aggregator/approve-transaction',
+                '/api/v6/dex/aggregator/approve-transaction',
                 {
-                    chainIndex: chainId,
+                    chainIndex: chainIndex,
                     tokenContractAddress: tokenAddress,
                     approveAmount: amount
                 }
             );
 
             if (!response.data?.[0]?.dexContractAddress) {
-                throw new Error(`No dex contract address found for chain ${chainId}`);
+                throw new Error(`No dex contract address found for chain ${chainIndex}`);
             }
             return response.data[0].dexContractAddress;
         } catch (error) {

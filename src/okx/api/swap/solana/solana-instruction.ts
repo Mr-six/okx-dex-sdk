@@ -93,7 +93,7 @@ export class SolanaInstructionExecutor {
           amount: displayToAmount,
           decimal: router.toToken.decimal,
         },
-        priceImpact: router.priceImpactPercentage,
+        priceImpact: router.priceImpactPercent,
       },
     };
   }

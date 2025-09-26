@@ -132,7 +132,7 @@ export class SolanaSwapExecutor implements SwapExecutor {
                     amount: displayToAmount,
                     decimal: routerResult.toToken.decimal,
                 },
-                priceImpact: routerResult.priceImpactPercentage,
+                priceImpact: routerResult.priceImpactPercent,
             },
         };
     }

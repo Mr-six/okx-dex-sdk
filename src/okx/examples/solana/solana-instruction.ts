@@ -18,36 +18,36 @@ async function main() {
     solana: { wallet },
   });
 
-  const chainId = '501';
+  const chainIndex = '501';
   const fromTokenAddress = '11111111111111111111111111111111'; // SOL
   const toTokenAddress = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'; // BONK
 
   const resp = await client.dex.getSolanaSwapInstruction({
-    chainId,
+    chainIndex,
     fromTokenAddress,
     toTokenAddress,
     amount: '10000000', // 0.01 SOL
     userWalletAddress: wallet.publicKey.toString(),
-    slippage: '0.1',
+    slippagePercent: '0.1',
   });
 
   console.log('swap-instruction response :', resp);
-  if (!resp.data || resp.data.length === 0) {
+  if (!resp.data) {
     console.error('swap-instruction empty');
     console.error(JSON.stringify(resp, null, 2));
     return;
   }
-  const instr = resp.data[0];
-  console.log('routerResult:', instr?.routerResult?.dexRouterList?.[0]?.router);
+  const instr = resp.data;
+  console.log('routerResult:', instr?.routerResult?.dexRouterList?.[0]?.dexProtocol?.dexName);
   console.log('instruction count:', instr?.instructionLists?.length ?? 0);
 
   const result = await client.dex.executeSolanaSwapInstructions({
-    chainId,
+    chainIndex,
     fromTokenAddress,
     toTokenAddress,
     amount: '10000000',
     userWalletAddress: wallet.publicKey.toString(),
-    slippage: '0.01',
+    slippagePercent: '0.01',
   });
 
   console.log('Tx Result:', result);

@@ -23,11 +23,11 @@ async function main() {
     try {
         // Get a quote
         const quote = await client.dex.getSwapData({
-            chainId: '8453',
+            chainIndex: '8453',
             fromTokenAddress: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', // WETH
             toTokenAddress: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', // USDC
             amount: String(10 ** 18 * 0.0001), // 0.0001 WETH
-            slippage: '0.05',
+            slippagePercent: '0.05',
             userWalletAddress: walletAddress,
             fromTokenReferrerWalletAddress: walletAddress,
             feePercent: '0.0001'

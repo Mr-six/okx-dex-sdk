@@ -25,11 +25,11 @@ async function main() {
         // Example 2: Get swap data and use it for gas estimation
         console.log('\n=== EVM Swap Transaction Gas Limit ===');
         const swapData = await client.dex.getSwapData({
-            chainId: '501', // Solana mainnet
+            chainIndex: '501', // Solana mainnet
             fromTokenAddress: '11111111111111111111111111111111', // SOL
             toTokenAddress: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
             amount: '10000', // 1 SOL in lamports
-            slippage: '0.05',
+            slippagePercent: '0.05',
             userWalletAddress: walletAddress,
             fromTokenReferrerWalletAddress: walletAddress,
             feePercent: '0.0001'

@@ -13,11 +13,11 @@ const walletAddress = "TRON_WALLET_ADDRESS";
 async function main() {
     try {
         const quote = await client.dex.getSwapData({
-            chainId: '195',
+            chainIndex: '195',
             fromTokenAddress: 'T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb',
             toTokenAddress: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
             amount: '10000000000',
-            slippage: '0.1',
+            slippagePercent: '0.1',
             userWalletAddress: walletAddress,
             autoSlippage: true
         });

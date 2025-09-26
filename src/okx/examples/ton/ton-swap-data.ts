@@ -13,11 +13,11 @@ const walletAddress = "TON_WALLET_ADDRESS";
 async function main() {
     try {
         const quote = await client.dex.getSwapData({
-            chainId: '607',
+            chainIndex: '607',
             fromTokenAddress: 'EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c',
             toTokenAddress: 'EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs',
             amount: '10000000000',
-            slippage: '0.1',
+            slippagePercent: '0.1',
         userWalletAddress: walletAddress,
         autoSlippage: true
     });

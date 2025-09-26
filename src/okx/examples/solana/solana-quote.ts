@@ -21,11 +21,11 @@ async function main() {
     try {
         // Get a quote
         const quote = await client.dex.getQuote({
-            chainId: '501',
+            chainIndex: '501',
             fromTokenAddress: 'So11111111111111111111111111111111111111112',
             toTokenAddress: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
             amount: '10000000000',
-            slippage: '0.5',
+            slippagePercent: '0.5',
             dexIds: '277',
             directRoute: true,
             feePercent: '5'

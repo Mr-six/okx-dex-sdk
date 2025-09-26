@@ -24,11 +24,11 @@ async function main() {
 
     // First get the swap data
     const swapData = await client.dex.getSwapData({
-      chainId: '501',
+      chainIndex: '501',
       fromTokenAddress: 'So11111111111111111111111111111111111111112',
       toTokenAddress: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
       amount: '10000000', // 0.01 SOL in lamports
-      slippage: '0.05',
+      slippagePercent: '0.05',
       userWalletAddress: walletAddress,
       fromTokenReferrerWalletAddress: walletAddress,
       feePercent: '0.0001'

@@ -263,10 +263,10 @@ export class DexAPI {
         };
     }
 
-    private getNetworkConfig(chainId: string): ChainConfig {
-        const networkConfig = this.config.networks?.[chainId];
+    private getNetworkConfig(chainIndex: string): ChainConfig {
+        const networkConfig = this.config.networks?.[chainIndex];
         if (!networkConfig) {
-            throw new Error(`Network configuration not found for chain ${chainId}`);
+            throw new Error(`Network configuration not found for chain ${chainIndex}`);
         }
         return networkConfig;
     }
@@ -291,35 +291,35 @@ export class DexAPI {
     async getQuote(params: QuoteParams): Promise<APIResponse<QuoteData>> {
         return this.client.request(
             "GET",
-            "/api/v5/dex/aggregator/quote",
+            "/api/v6/dex/aggregator/quote",
             this.toAPIParams(params)
         );
     }
 
-    async getLiquidity(chainId: string): Promise<APIResponse<LiquidityData>> {
+    async getLiquidity(chainIndex: string): Promise<APIResponse<LiquidityData>> {
         return this.client.request(
             "GET",
-            "/api/v5/dex/aggregator/get-liquidity",
-            this.toAPIParams({ chainId })
+            "/api/v6/dex/aggregator/get-liquidity",
+            this.toAPIParams({ chainIndex })
         );
     }
 
-    async getChainData(chainId: string): Promise<APIResponse<ChainData>> {
+    async getChainData(chainIndex: string): Promise<APIResponse<ChainData>> {
         return this.client.request(
             "GET",
-            "/api/v5/dex/aggregator/supported/chain",
-            this.toAPIParams({ chainId })
+            "/api/v6/dex/aggregator/supported/chain",
+            this.toAPIParams({ chainIndex })
         );
     }
 
     async getSwapData(params: SwapParams): Promise<SwapResponseData> {
         // Validate slippage parameters
-        if (!params.slippage && !params.autoSlippage) {
-            throw new Error("Either slippage or autoSlippage must be provided");
+        if (!params.slippagePercent && !params.autoSlippage) {
+            throw new Error("Either slippagePercent or autoSlippage must be provided");
         }
 
-        if (params.slippage) {
-            const slippageValue = parseFloat(params.slippage);
+        if (params.slippagePercent) {
+            const slippageValue = parseFloat(params.slippagePercent);
             if (
                 isNaN(slippageValue) ||
                 slippageValue < 0 ||
@@ -329,55 +329,54 @@ export class DexAPI {
             }
         }
 
-        if (params.autoSlippage && !params.maxAutoSlippage) {
+        if (params.autoSlippage && !params.maxAutoSlippagePercent) {
             throw new Error(
-                "maxAutoSlippageBps must be provided when autoSlippage is enabled"
+                "maxAutoSlippagePercent must be provided when autoSlippage is enabled"
             );
         }
 
         return this.client.request(
             "GET",
-            "/api/v5/dex/aggregator/swap",
+            "/api/v6/dex/aggregator/swap",
             this.toAPIParams(params)
         );
     }
 
-    async getTokens(chainId: string): Promise<APIResponse<TokenData>> {
+    async getTokens(chainIndex: string): Promise<APIResponse<TokenData>> {
         return this.client.request(
             "GET",
-            "/api/v5/dex/aggregator/all-tokens",
-            this.toAPIParams({ chainId })
+            "/api/v6/dex/aggregator/all-tokens",
+            this.toAPIParams({ chainIndex })
         );
     }
 
-    async getSolanaSwapInstruction(params: SwapParams): Promise<APIResponse<import("../types").SolanaSwapInstructionData>> {
-        if (!params.slippage && !params.autoSlippage) {
-            throw new Error("Either slippage or autoSlippage must be provided");
+    async getSolanaSwapInstruction(params: SwapParams): Promise<import("../types").APIResponseSingle<import("../types").SolanaSwapInstructionData>> {
+        if (!params.slippagePercent && !params.autoSlippage) {
+            throw new Error("Either slippagePercent or autoSlippage must be provided");
         }
-        if (params.slippage) {
-            const slippageValue = parseFloat(params.slippage);
+        if (params.slippagePercent) {
+            const slippageValue = parseFloat(params.slippagePercent);
             if (isNaN(slippageValue) || slippageValue < 0 || slippageValue > 1) {
                 throw new Error("Slippage must be between 0 and 1");
             }
         }
-        if (params.autoSlippage && !params.maxAutoSlippage) {
-            throw new Error("maxAutoSlippageBps must be provided when autoSlippage is enabled");
+        if (params.autoSlippage && !params.maxAutoSlippagePercent) {
+            throw new Error("maxAutoSlippagePercent must be provided when autoSlippage is enabled");
         }
         return this.client.request(
             "GET",
-            "/api/v5/dex/aggregator/swap-instruction",
+            "/api/v6/dex/aggregator/swap-instruction",
             this.toAPIParams(params)
         );
     }
 
     async executeSolanaSwapInstructions(params: SwapParams): Promise<SwapResult> {
         const instructionResp = await this.getSolanaSwapInstruction(params);
-        const respAny: any = instructionResp as any;
-        const instructionData = Array.isArray(respAny?.data) ? respAny.data[0] : respAny?.data;
+        const instructionData = instructionResp.data;
         if (!instructionData) {
             throw new Error("Empty instruction data from API");
         }
-        const networkConfig = this.getNetworkConfig(params.chainId);
+        const networkConfig = this.getNetworkConfig(params.chainIndex!);
         if (!this.config.solana?.wallet) {
             throw new Error("Solana wallet configuration required");
         }
@@ -387,10 +386,10 @@ export class DexAPI {
 
     async executeSwap(params: SwapParams): Promise<SwapResult> {
         const swapData = await this.getSwapData(params);
-        const networkConfig = this.getNetworkConfig(params.chainId);
+        const networkConfig = this.getNetworkConfig(params.chainIndex!);
 
         const executor = SwapExecutorFactory.createExecutor(
-            params.chainId,
+            params.chainIndex!,
             this.config,
             networkConfig
         );
@@ -401,25 +400,25 @@ export class DexAPI {
     async executeApproval(params: ApproveTokenParams): Promise<{ transactionHash: string; explorerUrl: string }> {
         try {
             // Get network configuration
-            const networkConfig = this.getNetworkConfig(params.chainId);
+            const networkConfig = this.getNetworkConfig(params.chainIndex!);
 
             // Get the DEX approval address from supported chains
-            const chainsData = await this.getChainData(params.chainId);
+            const chainsData = await this.getChainData(params.chainIndex);
             const dexTokenApproveAddress = chainsData.data?.[0]?.dexTokenApproveAddress;
             if (!dexTokenApproveAddress) {
-                throw new Error(`No dex contract address found for chain ${params.chainId}`);
+                throw new Error(`No dex contract address found for chain ${params.chainIndex}`);
             }
 
             // Create the approve executor
             const executor = SwapExecutorFactory.createApproveExecutor(
-                params.chainId,
+                params.chainIndex,
                 this.config,
                 networkConfig
             );
 
             // Execute approval with the contract address from supported chains
             const result = await executor.handleTokenApproval(
-                params.chainId,
+                params.chainIndex,
                 params.tokenContractAddress,
                 params.approveAmount,
             );

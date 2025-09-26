@@ -11,7 +11,7 @@ export interface CrossChainQuoteParams {
     fromTokenAddress: string;
     toTokenAddress: string;
     amount: string;
-    slippage: string;
+    slippagePercent: string;
     sort?: string;
     dexIds?: string;
     allowBridge?: string;
@@ -32,25 +32,25 @@ export class BridgeAPI {
     constructor(private readonly client: HTTPClient) { }
 
     // Get tokens supported for cross-chain transfers
-    async getSupportedTokens(chainId: string) {
-        return this.client.request('GET', '/api/v5/dex/cross-chain/supported/tokens', { chainId });
+    async getSupportedTokens(chainIndex: string) {
+        return this.client.request('GET', '/api/v5/dex/cross-chain/supported/tokens', { chainIndex });
     }
 
     // Get supported bridges for a chain
-    async getSupportedBridges(chainId: string) {
-        return this.client.request('GET', '/api/v5/dex/cross-chain/supported/bridges', { chainId });
+    async getSupportedBridges(chainIndex: string) {
+        return this.client.request('GET', '/api/v5/dex/cross-chain/supported/bridges', { chainIndex });
     }
 
     // Get token pairs available for bridging
-    async getBridgeTokenPairs(fromChainId: string) {
+    async getBridgeTokenPairs(fromChainIndex: string) {
         return this.client.request('GET', '/api/v5/dex/cross-chain/supported/bridge-tokens-pairs',
-            { fromChainId });
+            { fromChainIndex });
     }
 
     // Get quote for a cross-chain swap
     async getCrossChainQuote(params: CrossChainQuoteParams) {
         // Validate slippage
-        const slippageValue = parseFloat(params.slippage);
+        const slippageValue = parseFloat(params.slippagePercent);
         if (isNaN(slippageValue) || slippageValue < 0.002 || slippageValue > 0.5) {
             throw new Error('Slippage must be between 0.002 (0.2%) and 0.5 (50%)');
         }
