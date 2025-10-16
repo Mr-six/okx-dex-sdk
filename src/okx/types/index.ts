@@ -254,6 +254,8 @@ export interface SwapParams extends BaseParams {
     computeUnitPrice?: string;
     computeUnitLimit?: string;
     callDataMemo?: string;
+    gasMultiplier?: number;
+    waitForConfirmation?: boolean;
 }
 
 export interface SwapSimulationParams {
@@ -266,6 +268,7 @@ export interface SwapSimulationParams {
     };
     gasPrice: string;
     includeDebug: boolean;
+    gasMultiplier?: number;
 }
 
 export interface QuoteParams extends BaseParams {
@@ -325,6 +328,7 @@ export interface ApproveTokenParams {
     chainIndex: string;
     tokenContractAddress: string;
     approveAmount: string;
+    gasMultiplier?: number;
 }
 
 export interface ApproveTokenResult {

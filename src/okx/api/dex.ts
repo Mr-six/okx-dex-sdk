@@ -421,6 +421,7 @@ export class DexAPI {
                 params.chainIndex,
                 params.tokenContractAddress,
                 params.approveAmount,
+                params.gasMultiplier,
             );
 
             // Return formatted result

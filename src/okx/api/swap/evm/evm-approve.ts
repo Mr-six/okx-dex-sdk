@@ -30,7 +30,7 @@ const ERC20_ABI = [
 
 export class EVMApproveExecutor implements SwapExecutor {
     private readonly provider: ethers.Provider;
-    private readonly DEFAULT_GAS_MULTIPLIER = BigInt(150); // 1.5x
+    private readonly DEFAULT_GAS_MULTIPLIER = 110; // 1.1x
     private readonly httpClient: HTTPClient;
 
     constructor(
@@ -57,7 +57,8 @@ export class EVMApproveExecutor implements SwapExecutor {
     async handleTokenApproval(
         chainIndex: string,
         tokenAddress: string,
-        amount: string
+        amount: string,
+        gasMultiplier: number = 110
     ): Promise<{ transactionHash: string }> {
         if (!this.config.evm?.wallet) {
             throw new Error("EVM wallet required");
@@ -81,7 +82,8 @@ export class EVMApproveExecutor implements SwapExecutor {
             const result = await this.executeApprovalTransaction(
                 tokenAddress, 
                 dexContractAddress, 
-                amount
+                amount,
+                gasMultiplier,
             );
             
             return { transactionHash: result.hash };
@@ -115,23 +117,26 @@ export class EVMApproveExecutor implements SwapExecutor {
 
     private async executeApprovalTransaction(
         tokenAddress: string,
-        spenderAddress: string, 
-        amount: string
+        spenderAddress: string,
+        amount: string,
+        gasMultiplier?: number,
     ) {
         if (!this.config.evm?.wallet) {
             throw new Error("EVM wallet required");
         }
-
+        gasMultiplier = gasMultiplier ? gasMultiplier : this.DEFAULT_GAS_MULTIPLIER;
         const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, this.config.evm.wallet);
 
         let retryCount = 0;
         while (retryCount < (this.networkConfig.maxRetries || 3)) {
             try {
                 console.log("Sending approval transaction...");
+                const feeData = await this.provider.getFeeData();
+                const { maxFeePerGas, maxPriorityFeePerGas, gasPrice } = feeData;
                 const tx = await tokenContract.approve(spenderAddress, amount, {
                     gasLimit: BigInt(100000), // Safe default for approvals
-                    maxFeePerGas: (await this.provider.getFeeData()).maxFeePerGas! * this.DEFAULT_GAS_MULTIPLIER / BigInt(100),
-                    maxPriorityFeePerGas: (await this.provider.getFeeData()).maxPriorityFeePerGas! * this.DEFAULT_GAS_MULTIPLIER / BigInt(100)
+                    maxFeePerGas: ((maxFeePerGas || gasPrice)! * BigInt(gasMultiplier)) / BigInt(100),
+                    maxPriorityFeePerGas: ((maxPriorityFeePerGas || gasPrice)! * BigInt(gasMultiplier)) / BigInt(100)
                 });
 
                 console.log("Waiting for transaction confirmation...");

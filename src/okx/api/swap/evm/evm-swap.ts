@@ -5,7 +5,7 @@ import { SwapParams, SwapResponseData, SwapResult, ChainConfig, OKXConfig } from
 
 export class EVMSwapExecutor implements SwapExecutor {
     private readonly provider: ethers.Provider;
-    private readonly DEFAULT_GAS_MULTIPLIER = BigInt(150); // 1.5x
+    private readonly DEFAULT_GAS_MULTIPLIER = 110; // 1.1x
 
     constructor(
         private readonly config: OKXConfig,
@@ -30,7 +30,7 @@ export class EVMSwapExecutor implements SwapExecutor {
         }
 
         try {
-            const result = await this.executeEvmTransaction(tx);
+            const result = await this.executeEvmTransaction(tx, params);
             return this.formatSwapResult(result.hash, routerResult);
         } catch (error) {
             console.error("Swap execution failed:", error);
@@ -38,7 +38,7 @@ export class EVMSwapExecutor implements SwapExecutor {
         }
     }
 
-    private async executeEvmTransaction(tx: any) {
+    private async executeEvmTransaction(tx: any, params: SwapParams) {
         if (!this.config.evm?.wallet) {
             throw new Error("EVM wallet required");
         }
@@ -47,24 +47,25 @@ export class EVMSwapExecutor implements SwapExecutor {
         while (retryCount < (this.networkConfig.maxRetries || 3)) {
             try {
                 console.log("Preparing transaction...");
-                const gasMultiplier = BigInt(500); // 5x standard multiplier
+                const gasMultiplier = params.gasMultiplier ? params.gasMultiplier : this.DEFAULT_GAS_MULTIPLIER;
                 
                 // Get current nonce
                 const nonce = await this.provider.getTransactionCount(this.config.evm.wallet.address);
                 
                 // Get current gas prices
                 const feeData = await this.provider.getFeeData();
-                const baseFee = feeData.maxFeePerGas || BigInt(0);
-                const priorityFee = feeData.maxPriorityFeePerGas || BigInt(3000000000); // 3 gwei minimum
+                const { maxFeePerGas, maxPriorityFeePerGas, gasPrice } = feeData;
+                const baseFee = maxFeePerGas || gasPrice || BigInt(0);
+                const priorityFee = maxPriorityFeePerGas || gasPrice || BigInt(3000000000); // 3 gwei minimum
                 
                 const transaction = {
                     data: tx.data,
                     to: tx.to,
                     value: tx.value || '0',
                     nonce: nonce + retryCount, // Increment nonce for each retry
-                    gasLimit: BigInt(tx.gas || 0) * gasMultiplier / BigInt(100),
-                    maxFeePerGas: (baseFee * gasMultiplier) / BigInt(100),
-                    maxPriorityFeePerGas: (priorityFee * gasMultiplier) / BigInt(100)
+                    gasLimit: (BigInt(tx.gas || 0) * BigInt(gasMultiplier)) / BigInt(100),
+                    maxFeePerGas: (baseFee * BigInt(gasMultiplier)) / BigInt(100),
+                    maxPriorityFeePerGas: (priorityFee * BigInt(gasMultiplier)) / BigInt(100)
                 };
 
                 console.log("Transaction details:", {
@@ -79,9 +80,14 @@ export class EVMSwapExecutor implements SwapExecutor {
                 console.log("Sending transaction...");
                 const response = await this.config.evm.wallet.sendTransaction(transaction);
                 console.log("Transaction sent! Hash:", response.hash);
+
+                if (params.waitForConfirmation === false) {
+                    console.log('Skipping confirmation wait as per parameters');
+                    return response;
+                }
                 
                 // Wait a bit before checking status to allow transaction to be mined
-                await new Promise(resolve => setTimeout(resolve, 5000));
+                await new Promise(resolve => setTimeout(resolve, 2000));
                 
                 console.log("Waiting for transaction confirmation...");
                 try {
