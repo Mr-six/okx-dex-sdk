@@ -1,5 +1,6 @@
 import * as CryptoJS from 'crypto-js';
 import { OKXConfig } from '../types';
+import axios, { AxiosResponse } from 'axios';
 
 class APIError extends Error {
     constructor(
@@ -51,13 +52,9 @@ export class HTTPClient {
         };
     }
 
-    private async handleErrorResponse(response: Response, requestDetails: any) {
+    private async handleErrorResponse(response: AxiosResponse, requestDetails: any) {
         let responseBody;
-        try {
-            responseBody = await response.json();
-        } catch (e) {
-            responseBody = await response.text();
-        }
+        responseBody = await response.data
 
         throw new APIError(
             `HTTP error! status: ${response.status}`,
@@ -104,16 +101,20 @@ export class HTTPClient {
         let retries = 0;
         while (retries < this.config.maxRetries!) {
             try {
-                const response = await fetch(`${this.config.baseUrl}${path}${queryString}`, {
+                const config = {
                     method,
-                    headers
-                });
+                    url: `${this.config.baseUrl}${path}${queryString}`,
+                    headers,
+                    timeout: this.config.timeout,
+                    httpsAgent: this.config.httpsAgent
+                }
+                const response = await axios(config);
 
-                if (!response.ok) {
+                if (!response.status.toString().startsWith('2')) {
                     await this.handleErrorResponse(response, requestDetails);
                 }
 
-                const data = await response.json();
+                const data = await response.data;
 
                 // Log response in development
                 if (process.env.NODE_ENV === 'development') {

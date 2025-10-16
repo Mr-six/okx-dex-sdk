@@ -213,6 +213,7 @@ export interface OKXConfig {
     evm?: EVMConfig;
     timeout?: number;
     maxRetries?: number;
+    httpsAgent?: any; // For custom HTTPS agent if needed
 }
 
 // Generic request params
