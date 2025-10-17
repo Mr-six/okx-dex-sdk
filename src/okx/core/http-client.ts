@@ -132,9 +132,12 @@ export class HTTPClient {
                 }
 
                 return data as T;
-            } catch (error) {
+            } catch (error: any) {
                 if (error instanceof APIError) {
                     if (retries === this.config.maxRetries! - 1) throw error;
+                }  else if (error?.response?.data) {
+                    const errorData = error.response.data;
+                    throw new APIError(`API Error: ${errorData.msg || 'Unknown error'}`, errorData.status || undefined, errorData.code || undefined, requestDetails);
                 } else {
                     if (retries === this.config.maxRetries! - 1) {
                         throw new APIError(

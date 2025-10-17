@@ -1,6 +1,6 @@
 {
   "name": "okx-dex-sdk",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -69,7 +69,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/okx/okx-dex-sdk.git"
+    "url": "git+https://github.com/Mr-six/okx-dex-sdk.git"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
